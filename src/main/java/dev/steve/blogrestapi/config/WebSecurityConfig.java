@@ -57,7 +57,7 @@ public class WebSecurityConfig {
     );
     httpSecurity.logout(logout ->
       logout
-        .logoutUrl("/api/v1/domain/auth/sign-out")
+        .logoutUrl("/api/v1/auth/sign-out")
         .addLogoutHandler(logoutHandler)
         .logoutSuccessHandler((request, response, authentication) ->
           SecurityContextHolder.clearContext()
