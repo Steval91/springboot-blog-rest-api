@@ -5,7 +5,7 @@ import dev.steve.blogrestapi.dto.auth.AuthenticationResponse;
 import dev.steve.blogrestapi.dto.auth.SignInRequest;
 import dev.steve.blogrestapi.dto.user.UserRequestCreate;
 import dev.steve.blogrestapi.exception.CustomException;
-import dev.steve.blogrestapi.helper.TokenType;
+import dev.steve.blogrestapi.model.TokenType;
 import dev.steve.blogrestapi.model.entity.User;
 import dev.steve.blogrestapi.model.repository.AuthenticationLogRepository;
 import dev.steve.blogrestapi.service.user.impl.UserServiceImpl;

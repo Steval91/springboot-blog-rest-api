@@ -1,6 +1,6 @@
 package dev.steve.blogrestapi.controller;
 
-import dev.steve.blogrestapi.helper.TokenType;
+import dev.steve.blogrestapi.model.TokenType;
 import dev.steve.blogrestapi.model.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

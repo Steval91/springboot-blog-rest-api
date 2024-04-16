@@ -1,13 +1,11 @@
 package dev.steve.blogrestapi.model.entity;
 
-import dev.steve.blogrestapi.helper.UserRole;
+import dev.steve.blogrestapi.model.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.id.uuid.UuidGenerator;
 
 import java.util.Date;
 
@@ -16,7 +14,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "\"user\"") // Escape the table name
+@Table(name = "\"user\"")
 public class User {
 
   @Id
@@ -31,6 +29,10 @@ public class User {
 
   @Column(columnDefinition = "VARCHAR(100)", nullable = false)
   private String password;
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private UserRole role;
 
   private Long createdBy;
   private Long updatedBy;

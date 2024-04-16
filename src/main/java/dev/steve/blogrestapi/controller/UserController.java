@@ -5,8 +5,7 @@ import dev.steve.blogrestapi.dto.user.UserRequestCreate;
 import dev.steve.blogrestapi.dto.user.UserRequestUpdate;
 import dev.steve.blogrestapi.dto.user.UserResponse;
 import dev.steve.blogrestapi.model.entity.User;
-
-import dev.steve.blogrestapi.service.user.UserService;
+import dev.steve.blogrestapi.service.user.impl.UserServiceImpl;
 import dev.steve.blogrestapi.utility.CustomApiResponse;
 import dev.steve.blogrestapi.utility.CustomErrorResponse;
 import dev.steve.blogrestapi.utility.PaginationResponse;
@@ -17,6 +16,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,11 +31,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 @RequiredArgsConstructor
 @Tag(name = "Users", description = "User API's end points")
 @RestController
@@ -40,7 +38,7 @@ import java.util.stream.Collectors;
 class UserController {
 
   private final RenderResponse renderResponse;
-  private final UserService userService;
+  private final UserServiceImpl userService;
   private final WebRequest webRequest;
 
   @Operation(
@@ -97,9 +95,10 @@ class UserController {
       ),
     }
   )
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   @GetMapping
   PaginationResponse<Object> findAll(
-    @RequestParam(required = false) String name,
+    @RequestParam(required = false) String title,
     @RequestParam(defaultValue = "0") int page,
     @RequestParam(defaultValue = "5") int size,
     @RequestParam(defaultValue = "id,desc") String[] sort
@@ -118,9 +117,11 @@ class UserController {
     Pageable paging = PageRequest.of(page, size, Sort.by(orders));
 
     Page<User> userPage;
-    if (name != null) userPage =
-      userService.findByEmailContaining(name, paging); else userPage =
-      userService.findAll(paging);
+    if (title != null) {
+      userPage = userService.findByEmailContaining(title, paging);
+    } else {
+      userPage = userService.findAll(paging);
+    }
 
     List<UserResponse> userResponse = userPage
       .stream()
@@ -194,6 +195,7 @@ class UserController {
       ),
     }
   )
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   @GetMapping("/{userId}")
   UserResponse findById(@PathVariable("userId") Long userId) {
     User searchedUser = userService.findById(userId);
@@ -251,6 +253,7 @@ class UserController {
       ),
     }
   )
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   CustomApiResponse<Object> create(
@@ -326,6 +329,7 @@ class UserController {
       ),
     }
   )
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   @PutMapping
   CustomApiResponse<Object> update(
     @Valid @RequestBody UserRequestUpdate request,
@@ -396,6 +400,7 @@ class UserController {
       ),
     }
   )
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   @DeleteMapping("/{userId}")
   CustomApiResponse<Object> delete(@PathVariable("userId") Long userId) {
     userService.delete(userId);

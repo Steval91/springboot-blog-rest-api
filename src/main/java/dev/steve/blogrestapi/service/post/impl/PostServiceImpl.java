@@ -1,119 +1,187 @@
 package dev.steve.blogrestapi.service.post.impl;
 
 import dev.steve.blogrestapi.dto.post.PostRequest;
-import dev.steve.blogrestapi.dto.post.PostResponse;
+import dev.steve.blogrestapi.dto.post.PostRequestCreate;
+import dev.steve.blogrestapi.dto.post.PostRequestUpdate;
 import dev.steve.blogrestapi.exception.CustomException;
+import dev.steve.blogrestapi.model.UserRole;
 import dev.steve.blogrestapi.model.entity.Post;
 import dev.steve.blogrestapi.model.entity.User;
 import dev.steve.blogrestapi.model.repository.PostRepository;
 import dev.steve.blogrestapi.model.repository.UserRepository;
 import dev.steve.blogrestapi.service.post.PostService;
+import dev.steve.blogrestapi.utility.ConnectedUser;
+import java.security.Principal;
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
-import java.util.Date;
-import java.util.Optional;
-
-@Service
 @RequiredArgsConstructor
+@Service
 public class PostServiceImpl implements PostService {
 
-    private final PostRepository postRepository;
-    private final UserRepository userRepository;
+  private final PostRepository postRepository;
+  private final UserRepository userRepository;
 
+  private static final String RESOURCE_NOT_FOUND = "Resource Not Found";
 
-    private static final String RESOURCE_NOT_FOUND = "Resource Not Found";
-    private static final String BAD_REQUEST = "Bad Request";
+  @Override
+  public Page<Post> findAll(Pageable pageable) {
+    return postRepository.findAll(pageable);
+  }
 
-    @Override
-    public Page findAll(Pageable pageable) {
-        return postRepository.findAll(pageable);
+  @Override
+  public Page<Post> findByTitleContaining(
+    String searchQuery,
+    Pageable pageable
+  ) {
+    return postRepository.findByTitleContaining(searchQuery, pageable);
+  }
+
+  @Override
+  public Post findById(Long postId) {
+    return postRepository
+      .findById(postId)
+      .orElseThrow(() ->
+        new CustomException(
+          "Post with ID " + postId + " not found",
+          RESOURCE_NOT_FOUND,
+          HttpStatus.NOT_FOUND
+        )
+      );
+  }
+
+  @Override
+  public void existsById(Long postId) {
+    if (Boolean.FALSE.equals(postRepository.existsById(postId))) {
+      throw new CustomException(
+        RESOURCE_NOT_FOUND,
+        "Post with ID " + postId + " not found",
+        HttpStatus.NOT_FOUND
+      );
+    }
+  }
+
+  @Override
+  public Post save(
+    PostRequestCreate request,
+    Principal connectedUserPrincipal
+  ) {
+    Long creatorId = findConnectedUser(connectedUserPrincipal).getId();
+
+    Post post = Post
+      .builder()
+      .title(request.getTitle())
+      .body(request.getBody())
+      .author(request.getAuthor())
+      .createdAt(new Date())
+      .createdBy(creatorId)
+      .updatedAt(new Date())
+      .updatedBy(creatorId)
+      .build();
+
+    return postRepository.save(post);
+  }
+
+  @Override
+  public Post update(
+    PostRequestUpdate request,
+    Principal connectedUserPrincipal
+  ) {
+    Long creatorId = findConnectedUser(connectedUserPrincipal).getId();
+
+    Post searchedPost = this.findById(request.getId());
+    searchedPost.setTitle(request.getTitle());
+    searchedPost.setBody(request.getBody());
+    searchedPost.setAuthor(request.getAuthor());
+    searchedPost.setUpdatedAt(new Date());
+    searchedPost.setUpdatedBy(creatorId);
+
+    return postRepository.save(searchedPost);
+  }
+
+  @Override
+  public Post saveOrUpdate(
+    PostRequest postRequest,
+    Principal connectedUserPrincipal
+  ) {
+    User connectedUser = findConnectedUser(connectedUserPrincipal);
+
+    Post post = Post
+      .builder()
+      .title(postRequest.getTitle())
+      .body(postRequest.getBody())
+      .author(postRequest.getAuthor())
+      .createdAt(new Date())
+      .createdBy(connectedUser.getId())
+      .build();
+
+    Long id = postRequest.getId();
+
+    if (id == null || id == 0) {
+      return postRepository.save(post);
     }
 
-    @Override
-    public PostResponse findById(Long id) {
-        Post post = postRepository.findById(id).get();
-        return entityToDto(post);
+    Post searchedPost = postRepository
+      .findById(postRequest.getId())
+      .orElseThrow(() ->
+        new CustomException(
+          RESOURCE_NOT_FOUND,
+          "Post with ID " + id + " not found",
+          HttpStatus.NOT_FOUND
+        )
+      );
+
+    post.setId(searchedPost.getId());
+    post.setUpdatedAt(new Date());
+    post.setUpdatedBy(connectedUser.getId());
+
+    return postRepository.save(post);
+  }
+
+  @Override
+  public void delete(Long postId) {
+    this.existsById(postId);
+
+    postRepository.deleteById(postId);
+  }
+
+  public User findConnectedUser(Principal connectedUser) {
+    UserDetails userDetails = (UserDetails) (
+      (UsernamePasswordAuthenticationToken) connectedUser
+    ).getPrincipal();
+
+    return userRepository
+      .findByEmail(userDetails.getUsername())
+      .orElseThrow(() ->
+        new CustomException(
+          RESOURCE_NOT_FOUND,
+          "User not found",
+          HttpStatus.NOT_FOUND
+        )
+      );
+  }
+
+  public UserRole getUserRole(String role) {
+    UserRole userRole;
+    if (role.equals("admin")) {
+      userRole = UserRole.ROLE_ADMIN;
+    } else if (role.equals("writer")) {
+      userRole = UserRole.ROLE_WRITER;
+    } else {
+      throw new CustomException(
+        RESOURCE_NOT_FOUND,
+        "Role not found",
+        HttpStatus.BAD_REQUEST
+      );
     }
 
-    @Override
-    public PostResponse saveOrUpdate(PostRequest postRequest, Principal connectedUser) {
-        User user = findConnectedUser(connectedUser);
-        Long id = postRequest.getId() == null ? 0 : Long.parseLong(postRequest.getId());
-        if (id == 0) {
-            Post newPost = Post.builder()
-                    .title(postRequest.getTitle())
-                    .body(postRequest.getBody())
-                    .author(postRequest.getAuthor())
-                    .createdAt(new Date())
-                    .createdBy(user.getId())
-                    .updatedAt(new Date())
-                    .updatedBy(user.getId())
-                    .build();
-            postRepository.save(newPost);
-            return entityToDto(newPost);
-        }
-
-        Optional<Post> post = postRepository.findById(Long.valueOf(postRequest.getId()));
-        if (post.isPresent()) {
-            Post newPost = Post.builder()
-                    .id(post.get().getId())
-                    .title(postRequest.getTitle())
-                    .body(postRequest.getBody())
-                    .author(postRequest.getAuthor())
-                    .updatedAt(new Date())
-                    .updatedBy(user.getId())
-                    .build();
-            postRepository.save(newPost);
-            return entityToDto(newPost);
-        } else {
-            throw new CustomException(
-                    RESOURCE_NOT_FOUND,
-                    "Post with ID " + id + " not found",
-                    HttpStatus.NOT_FOUND
-            );
-        }
-
-    }
-
-    @Override
-    public void delete(Long id) {
-        postRepository.deleteById(id);
-    }
-
-    public PostResponse entityToDto(Post post) {
-        return PostResponse.builder()
-                .title(post.getTitle())
-                .body(post.getBody())
-                .author(post.getAuthor())
-                .id(String.valueOf(post.getId()))
-                .createdAt(post.getCreatedAt())
-                .createdBy(post.getCreatedBy())
-                .updatedAt(post.getUpdatedAt())
-                .updatedBy(post.getUpdatedBy())
-                .build();
-    }
-
-    public User findConnectedUser(Principal connectedUser) {
-        UserDetails userDetails = (UserDetails) (
-                (UsernamePasswordAuthenticationToken) connectedUser
-        ).getPrincipal();
-
-        return userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() ->
-                        new CustomException(
-                                RESOURCE_NOT_FOUND,
-                                "User not found",
-                                HttpStatus.NOT_FOUND
-                        )
-                );
-    }
+    return userRole;
+  }
 }

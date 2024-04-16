@@ -1,27 +1,42 @@
 package dev.steve.blogrestapi.dto.post;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
-@Builder
-@AllArgsConstructor
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PostResponse {
-    @JsonIgnore
-    private String id;
+    @Schema(description = "Post's ID")
+    private Long id;
 
+    @Schema(description = "Post's Name")
+    private String name;
+
+    @Schema(description = "Post's Title")
     private String title;
 
+    @Schema(description = "Post's Body")
     private String body;
 
+    @Schema(description = "Post's Author")
     private String author;
 
-    private Date createdAt;
+    @Schema(description = "Created By")
     private Long createdBy;
-    private Date updatedAt;
+
+    @Schema(description = "Updated By")
     private Long updatedBy;
+
+    @Schema(description = "Created Date")
+    private Date createdAt;
+
+    @Schema(description = "Updated Date")
+    private Date updatedAt;
 }

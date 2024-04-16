@@ -27,4 +27,8 @@ public class UserRequestCreate {
   @Schema(description = "User's password")
   @NotBlank(message = "Password is required")
   private String password;
+
+  @Schema(description = "User's role")
+  @NotBlank(message = "Role is required")
+  private String role;
 }

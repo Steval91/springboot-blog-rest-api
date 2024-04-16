@@ -1,6 +1,7 @@
 package dev.steve.blogrestapi.dto.post;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,12 +14,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Post's Response")
-public class PostRequest {
+public class PostRequestUpdate {
 
-  @Builder.Default
   @Schema(description = "Post's ID")
   @NotNull(message = "ID is required")
-  private Long id = null;
+  private Long id;
 
   @Schema(description = "Post's title")
   @NotBlank(message = "Title is required")

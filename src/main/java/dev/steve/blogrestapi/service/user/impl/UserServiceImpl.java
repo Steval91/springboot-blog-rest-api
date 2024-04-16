@@ -4,10 +4,13 @@ import dev.steve.blogrestapi.dto.user.UserRequestChangePassword;
 import dev.steve.blogrestapi.dto.user.UserRequestCreate;
 import dev.steve.blogrestapi.dto.user.UserRequestUpdate;
 import dev.steve.blogrestapi.exception.CustomException;
-import dev.steve.blogrestapi.helper.UserRole;
+import dev.steve.blogrestapi.model.UserRole;
 import dev.steve.blogrestapi.model.entity.User;
 import dev.steve.blogrestapi.model.repository.UserRepository;
 import dev.steve.blogrestapi.service.user.UserService;
+import dev.steve.blogrestapi.utility.ConnectedUser;
+import java.security.Principal;
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,9 +19,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.security.Principal;
-import java.util.Date;
 
 @RequiredArgsConstructor
 @Service
@@ -65,26 +65,6 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public UserRole getUserRole(String role) {
-    UserRole userRole;
-    if (role.equals("admin")) {
-      userRole = UserRole.ROLE_ADMIN;
-    } else if (role.equals("job_manager")) {
-      userRole = UserRole.ROLE_JOB_MANAGER;
-    } else if (role.equals("applicant")) {
-      userRole = UserRole.ROLE_APPLICANT;
-    } else {
-      throw new CustomException(
-        RESOURCE_NOT_FOUND,
-        "Role not found",
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    return userRole;
-  }
-
-  @Override
   public User save(
     UserRequestCreate request,
     Principal connectedUserPrincipal,
@@ -98,30 +78,25 @@ public class UserServiceImpl implements UserService {
       );
     }
 
+    UserRole userRole = getUserRole(request.getRole());
 
     User user = User
       .builder()
       .name(request.getName())
       .email(request.getEmail())
       .password(passwordEncoder.encode(request.getPassword()))
+      .role(userRole)
       .createdAt(new Date())
       .updatedAt(new Date())
       .build();
 
-    User savedUser = userRepository.save(user);
-    User connectedUser = null;
-    Long creatorId = savedUser.getId();
-
     if (action.equals("create-user")) {
-      connectedUser = findConnectedUser(connectedUserPrincipal);
-      creatorId = connectedUser.getId();
+      Long creatorId = findConnectedUser(connectedUserPrincipal).getId();
+      user.setCreatedBy(creatorId);
+      user.setUpdatedBy(creatorId);
     }
 
-    savedUser.setCreatedBy(creatorId);
-    savedUser.setUpdatedBy(creatorId);
-    userRepository.save(savedUser);
-
-    return savedUser;
+    return userRepository.save(user);
   }
 
   @Override
@@ -129,13 +104,15 @@ public class UserServiceImpl implements UserService {
     UserRequestUpdate request,
     Principal connectedUserPrincipal
   ) {
-    User connectedUser = findConnectedUser(connectedUserPrincipal);
+    Long creatorId = findConnectedUser(connectedUserPrincipal).getId();
+    UserRole userRole = getUserRole(request.getRole());
 
     User searchedUser = this.findById(request.getId());
     searchedUser.setName(request.getName());
     searchedUser.setEmail(request.getEmail());
+    searchedUser.setRole(userRole);
     searchedUser.setUpdatedAt(new Date());
-    searchedUser.setUpdatedBy(connectedUser.getId());
+    searchedUser.setUpdatedBy(creatorId);
 
     return userRepository.save(searchedUser);
   }
@@ -150,9 +127,9 @@ public class UserServiceImpl implements UserService {
   @Override
   public void changePassword(
     UserRequestChangePassword request,
-    Principal connectedUser
+    Principal connectedUserPrincipal
   ) {
-    User user = findConnectedUser(connectedUser);
+    User user = findConnectedUser(connectedUserPrincipal);
 
     if (
       !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())
@@ -176,7 +153,6 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
   }
 
-  @Override
   public User findConnectedUser(Principal connectedUser) {
     UserDetails userDetails = (UserDetails) (
       (UsernamePasswordAuthenticationToken) connectedUser
@@ -191,5 +167,22 @@ public class UserServiceImpl implements UserService {
           HttpStatus.NOT_FOUND
         )
       );
+  }
+
+  public UserRole getUserRole(String role) {
+    UserRole userRole;
+    if (role.equals("admin")) {
+      userRole = UserRole.ROLE_ADMIN;
+    } else if (role.equals("writer")) {
+      userRole = UserRole.ROLE_WRITER;
+    } else {
+      throw new CustomException(
+        RESOURCE_NOT_FOUND,
+        "Role not found",
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    return userRole;
   }
 }

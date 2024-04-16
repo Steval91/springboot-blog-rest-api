@@ -28,4 +28,8 @@ public class UserRequestUpdate {
   @Email
   @NotBlank(message = "Email is required")
   private String email;
+
+  @Schema(description = "User's role")
+  @NotBlank(message = "Role is required")
+  private String role;
 }
