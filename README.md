@@ -107,7 +107,7 @@ Request Body:
 {
   "title": "Title 1",
   "body": "Body 1",
-  "author: "Author 1"
+  "author": "Author 1"
 }
 ```
 
@@ -118,9 +118,9 @@ Request Body:
 ```json
 {
   "id": 1,
-  "title": "Title 1",
-  "body": "Body 1",
-  "author: "Author 1"
+  "title": "Title 1 updated",
+  "body": "Body 1 updated",
+  "author": "Author 1 updated"
 }
 ```
 
