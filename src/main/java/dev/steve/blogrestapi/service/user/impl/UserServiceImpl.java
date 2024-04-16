@@ -8,7 +8,6 @@ import dev.steve.blogrestapi.model.UserRole;
 import dev.steve.blogrestapi.model.entity.User;
 import dev.steve.blogrestapi.model.repository.UserRepository;
 import dev.steve.blogrestapi.service.user.UserService;
-import dev.steve.blogrestapi.utility.ConnectedUser;
 import java.security.Principal;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;

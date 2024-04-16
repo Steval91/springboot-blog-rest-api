@@ -10,7 +10,6 @@ import dev.steve.blogrestapi.model.entity.User;
 import dev.steve.blogrestapi.model.repository.PostRepository;
 import dev.steve.blogrestapi.model.repository.UserRepository;
 import dev.steve.blogrestapi.service.post.PostService;
-import dev.steve.blogrestapi.utility.ConnectedUser;
 import java.security.Principal;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor

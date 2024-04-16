@@ -2,8 +2,6 @@ package dev.steve.blogrestapi;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-//USing BDD Mockito
-import static org.mockito.BDDMockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.steve.blogrestapi.model.entity.Post;

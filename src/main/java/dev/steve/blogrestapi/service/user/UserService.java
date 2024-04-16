@@ -3,12 +3,10 @@ package dev.steve.blogrestapi.service.user;
 import dev.steve.blogrestapi.dto.user.UserRequestChangePassword;
 import dev.steve.blogrestapi.dto.user.UserRequestCreate;
 import dev.steve.blogrestapi.dto.user.UserRequestUpdate;
-import dev.steve.blogrestapi.model.UserRole;
 import dev.steve.blogrestapi.model.entity.User;
+import java.security.Principal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.security.Principal;
 
 public interface UserService {
   Page<User> findAll(Pageable paging);
