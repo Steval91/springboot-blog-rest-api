@@ -1,14 +1,12 @@
 # SPRING BOOT BLOG REST API
 
-## Overview
-
 ## Technologies
 
 ### Tech Stack
 
 - Java 21
 - Spring Boot 3.2
-- MySQL
+- H2 Database
 - Maven
 
 ### Dependency
