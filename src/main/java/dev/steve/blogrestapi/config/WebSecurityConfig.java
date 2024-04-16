@@ -42,6 +42,8 @@ public class WebSecurityConfig {
     );
     httpSecurity.authorizeHttpRequests(httpRequest ->
       httpRequest
+        .requestMatchers("/swagger-docs")
+        .permitAll()
         .requestMatchers("/api/v1/auth/**")
         .permitAll()
         .anyRequest()
